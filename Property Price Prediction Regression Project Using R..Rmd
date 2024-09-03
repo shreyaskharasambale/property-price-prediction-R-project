@@ -1,12 +1,4 @@
----
-title: "CS5801 Re-sit Coursework Template Proforma"
-author: "2248928"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_notebook
-version: 1.0
----
 
-# 0. Instructions 
 #Loading the required libraries
 
 ```{r}
