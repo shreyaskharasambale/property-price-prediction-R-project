@@ -1,0 +1,1105 @@
+---
+title: "CS5801 Re-sit Coursework Template Proforma"
+author: "2248928"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_notebook
+version: 1.0
+---
+
+# 0. Instructions 
+#Loading the required libraries
+
+```{r}
+library(dplyr)
+library(validate)
+library(stringr)
+library(Hmisc)
+library(ggplot2)
+library(stats)
+library(binom)
+library(outliers)
+library(modeest)
+library(mice)
+library(skimr)
+library(caret)
+library(moments)
+library(reshape2)
+```
+
+
+# 1. Organise and clean the data
+
+## 1.1 Subset the data into the specific dataset allocated
+
+
+```{r}
+mydf <- read.csv("mydf.csv")
+```
+
+
+The dataframe provided contains 334 observations and 16 columns.
+- The list of columns which are provided can be derived using head () function. The dataframe contains "id", "price", "bedrooms", "bathrooms", "sqft_living", "sqft_lot", "floors", "waterfront", "view", "condition", "grade", "sqft_above", “sqft_basement”, “yr_built”, “yr_renovated”, “condition.ind”
+- The various datatypes of the column can be identified using the str () function
+- The summary of each column can be identified using the summary () function which gives and details of data in each column
+
+
+#I will Start with eyeballing the data frame to get a general idea of columns and know its structure.
+
+```{r}
+View(mydf)
+```
+
+#I had a glance at all the columns with the "view" command, Now, I will use the ‘head’ function to view the first 5 entries in the dataframe. 
+
+```{r}
+head(mydf)
+```
+#Now, I will use the ‘str’ function to know the type of data i.e. numerical, integer or character. It will help me get familiar with the data type which will eventually help me in identifying the test/model to use. It will also give me the number of observations (rows) and an exact number of columns (variables).
+
+```{r}
+str(mydf)
+```
+
+#Now, I will use the ‘summary’ function. Using the ‘summary’ function will help me to summarize the variables showing the measure of mean, median, inter-quartile range and minimum/maximum for numerical variables.
+
+```{r}
+summary(mydf)
+
+```
+
+ 
+## 1.2 Data quality analysis
+
+*Check for missing values*
+Next, we'll examine each column and variable to make sure nothing is blank. 
+I will check for any missing values in the dataframe and if any missing values are found, then I will decide how to deal with them.
+I will have to check for any NA or NAN values in each column.
+I can delete the rows or use imputation technique of applying the mean, median and mode value to that particular column.
+The is.na() function in R may be used for this purpose.
+
+*Check for outliers*
+An important component of data quality analysis is dealing with outliers. Data points known as outliers differ greatly from the majority of the data. They may happen as a result of mismeasurements, data entry errors, or extremely odd findings, among other things. As they can skew statistical metrics and affect how well machine learning algorithms work, outliers can significantly impair the analysis and modelling process.
+
+I will search the dataframe for outliers. One approach to do this is by calculating the lowest and maximum values for each variable/column and then determining whether any values go outside the intended range.
+
+*Check for Integrity in the data*
+As part of the validity verification process, a dataframe is checked for numbers that don't make sense, either because they are outside of the expected range or because they don't follow the required format.
+
+*Check for Uniqueness in the data*
+To find and count the unique or different values in each column, a uniqueness check is run on the dataframe. It aids in your understanding of the dataframe's degree of uniqueness. The importance of uniqueness tests relies on the type of data and the particular analysis context. High uniqueness may be completely normal and expected for some dataframes, while it may be problematic for other dataframes or call for additional research. 
+
+*Check for Consistency in the data*
+The values contained in the dataframe must be accurate, legitimate, and conform to predetermined rules or expectations in order to pass the consistency test. Consistency tests aid in locating any inconsistencies or inaccuracies that may be present in the data.
+Checking for consistency is crucial to ensuring the accuracy and reliability of the data. If discrepancies are discovered, I will look into the reasons why they occurred and take the necessary steps to update the data.
+
+*Check for accuracy in the data*
+Verifying the correctness of the values in relation to a trustworthy source or "ground truth" is one way to ensure that the data is accurate. It aids in finding any mistakes, oddities, or discrepancies that may be present in the dataframe.
+I will always consider the context of my data and the data's intended use when performing accuracy checks.
+
+*Check for completeness in the data*
+Making sure that the dataframe contains all necessary data is a part of determining if the data is complete. Analysis and modelling can be hampered by incomplete data, which can produce biased outcomes and insufficient insights.
+For my analysis and modelling to be reliable, thoroughness checks are essential. I can derive more accurate and significant inferences from the dataframe by managing missing values effectively and checking the data's logical consistency.
+
+***Check for Clarity in the data***
+Making sure that the dataframe is well-structured, well-documented, and simple to understand is part of the process of checking for data clarity. For successful data-driven decision-making, teamwork, and effective data analysis, clarity check is essential.
+
+***Check for Relevance in the data***
+Data relevance checking involves determining whether the data are important and relevant for the particular investigation or issue at hand. To make sure that the data utilised for analysis is in line with the goals and inquiries I want to answer, relevance is crucial.
+
+***Check for accessibility in the data***
+Making sure that the dataset is simple for the target users and stakeholders is a part of testing the data for accessibility. Accessibility is necessary to support data-driven decision-making and encourage team member collaboration. 
+
+## Data quality check
+
+Now, I will assess the quality of the dataframe.
+
+1. I will check for any duplicate records.
+2. I will Check for any missing/negative/irrelevant values and make the required changes so that it does not affect the data frame and eventually my analysis.
+3. I will check each column for missing values, white spaces and special characters if any.
+4. I will check each column type and make the change the required column types if they are incorrect.
+
+
+***Converting numerical data to factors***
+
+I will convert the columns - "view", "condition", and "grade" into factors.
+The 
+In R, categorical variables or discrete levels are represented by factors. You can express numerical values as discrete categories and make them easier to understand, interpret and analyse by transforming them into factors.
+Factors give the categories in the columns a distinct and meaningful representation.
+In my dataframe, 
+"View" has values between 0 and 4, 
+"Condition" has values between 1 and 5, 
+"waterfront" has values either 0 or 1,
+"floors" has values between 1 and 3
+"condition.ind" has values either 0 or 1
+and "Grade" has values between 1 and 12. 
+I can interpret these numbers as unique levels (for example, various view ratings, property conditions, and housing grades) by converting them to factors.
+
+But, not all numerical variables should be factorised. 
+For instance, changing "View", "waterfront", "floors", "condition.ind", "Condition," and "Grade" into factors could not be suitable if they represented continuous variables or had a meaningful numerical order. However, converting them to factors, fits nicely with their categorical structure and makes meaningful data analysis possible given their discrete and constrained range.
+
+```{r}
+
+# Convert 'view' column to factor
+mydf$view <- factor(mydf$view) #The values in the 'view' column ranges from 0-4
+
+# Convert 'condition' column to factor
+mydf$condition <- factor(mydf$condition) #The values in the 'condition' column ranges from 1-5
+
+# Convert 'waterfront' column to factor
+mydf$waterfront <- factor(mydf$waterfront) #The 'waterfront' column has values either 0 and 1
+
+# Convert 'Floors' column to factor
+mydf$floors <- factor(mydf$floors) #The values in the 'floors' column ranges from 1-3
+
+# Convert 'grade' column to factor
+mydf$grade <- factor(mydf$grade) #The values in the 'grade' column ranges from 0-13
+
+# Convert 'condition.ind' column to factor
+mydf$condition.ind <- factor(mydf$condition.ind) #The 'condition.ind' column has values either 0 & 1
+
+# Print the updated data frame
+print(mydf)
+str(mydf)
+```
+
+
+#Skimming the data and obtaining the summary of the dataframe.
+```{r}
+skim(mydf)
+
+```
+
+----------------
+*Integrity Test*
+----------------
+I am executing integrity tests on different columns of my dataframe. These tests guarantee that the data meets the required criteria and standards for data quality.
+To find and remove any data points that do not fit the required requirements.I can make sure the data is accurate, valid, and suitable for upcoming analytical, modelling, or reporting tasks by carrying out these integrity tests. The results are more dependable and accurate since it assists in identifying any data input errors, discrepancies, or outliers.
+
+```{r}
+integrity.rules <- validator(
+  check_v_Price = price > 0,
+  check_v_Bedrooms = bedrooms > 0,
+  check_v_Bathrooms = bathrooms > 0,
+  check_v_Sqftliving = sqft_living > 0,
+  check_v_Sqftlot = sqft_lot >= 0,
+  check_v_Floors = is.element(floors, c(0, 1, 1.5, 2, 2.5, 3, 3.5)),
+  check_v_Waterfront = is.element(waterfront, c("0", "1")),
+  check_v_View = is.element(view, c(0, 1, 2, 3, 4, 5)),
+  check_v_Condition = is.element(condition, c("0", "1", "2", "3", "4", "5")),
+  check_grade = is.element(grade, c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13")),
+  check_v_Sqft_above = sqft_above >= 0,
+  check_v_Sqft_basement = sqft_basement >= 0,
+  check_v_Yr_built = yr_built >= 0,
+  check_v_Yr_renovated = yr_renovated >= 0,
+  check_v_ConditionInd = is.element(condition.ind, c("0", "1"))
+)
+
+```
+
+----------------------
+*Missing Values Check*
+----------------------
+
+For each column in my dataframe, I am checking for missing data. These checks make sure that the data is full for these variables and that the given columns do not contain any missing values (NA or NaN).
+These missing data checks are performed to make sure that the supplied columns have complete data without any missing or incorrect values. Data quality depends on locating and managing missing data, which can also have an impact on the precision and dependability of later analysis and modelling. By doing these checks, I can determine whether the dataset is prepared for additional analysis and take the necessary steps, like imputation or data removal.
+
+```{r}
+missing.rules <- validator(
+  missing_NA_id = !is.na(id),
+  missing_NAN_id = !is.nan(id),
+
+  missing_NA_price = !is.na(price),
+  missing_NAN_price = !is.nan(price),
+
+  missing_NA_bedrooms = !is.na(bedrooms),
+  missing_NAN_bedrooms = !is.nan(bedrooms),
+
+  missing_NA_bathrooms = !is.na(bathrooms),
+  missing_NAN_bathrooms = !is.nan(bathrooms),
+
+  missing_NA_sqft_living = !is.na(sqft_living),
+  missing_NAN_sqft_living = !is.nan(sqft_living),
+
+  missing_NA_sqft_lot = !is.na(sqft_lot),
+  missing_NAN_sqft_lot = !is.nan(sqft_lot),
+
+  missing_NA_floors = !is.na(floors),
+  missing_NAN_floors = !is.nan(floors),
+
+  missing_NA_waterfront = !is.na(waterfront),
+  missing_NAN_waterfront = !is.nan(waterfront),
+
+  missing_NA_view = !is.na(view),
+  missing_NAN_view = !is.nan(view),
+
+  missing_NA_condition = !is.na(condition),
+  missing_NAN_condition = !is.nan(condition),
+
+  missing_NA_grade = !is.na(grade),
+  missing_NAN_grade = !is.nan(grade),
+
+  missing_NA_sqft_above = !is.na(sqft_above),
+  missing_NAN_sqft_above = !is.nan(sqft_above),
+
+  missing_NA_sqft_basement = !is.na(sqft_basement),
+  missing_NAN_sqft_basement = !is.nan(sqft_basement),
+
+  missing_NA_yr_built = !is.na(yr_built),
+  missing_NAN_yr_built = !is.nan(yr_built),
+
+  missing_NA_yr_renovated = !is.na(yr_renovated),
+  missing_NAN_yr_renovated = !is.nan(yr_renovated),
+
+  missing_NA_condition_ind = !is.na(condition.ind),
+  missing_NAN_condition_ind = !is.nan(condition.ind)
+)
+```
+
+
+--------------------
+*Completeness check*
+--------------------
+
+I am checking the data frame's various columns for completeness. These checks ensure that there are no NA or NaN values present and that the given columns have non-missing (full) values.
+
+
+```{r}
+completeness.rules <- validator(
+  complete_id = is_complete(id),
+  complete_price = is_complete(price),
+  complete_bedrooms = is_complete(bedrooms),
+  complete_bathrooms = is_complete(bathrooms),
+  complete_sqft_living = is_complete(sqft_living),
+  complete_sqft_lot = is_complete(sqft_lot),
+  complete_floors = is_complete(floors),
+  complete_waterfront = is_complete(waterfront),
+  complete_view = is_complete(view),
+  complete_condition = is_complete(condition),
+  complete_grade = is_complete(grade),
+  complete_sqft_above = is_complete(sqft_above),
+  complete_sqft_basement = is_complete(sqft_basement),
+  complete_yr_built = is_complete(yr_built),
+  complete_yr_renovated = is_complete(yr_renovated),
+  complete_condition_ind = is_complete(condition.ind)
+)
+
+```
+
+---------------------
+*Variable Type Check*
+---------------------
+I am performing these variable type checks to make sure that the provided columns are accurately identified as numeric variables. For carrying out mathematical operations, statistical analysis, and modelling activities, numerical variables are crucial. I am ensuring that the data is appropriate for quantitative analysis and avoid potential mistakes that would happen if the data types were not properly specified by confirming that these columns have numeric data types.
+
+```{r}
+variabletype.rule <- validator(
+  variable_id = is.numeric(id),
+  variable_price = is.numeric(price),
+  variable_bedrooms = is.numeric(bedrooms),
+  variable_bathrooms = is.numeric(bathrooms),
+  variable_sqft_living = is.numeric(sqft_living),
+  variable_sqft_lot = is.numeric(sqft_lot),
+  variable_sqft_above = is.numeric(sqft_above),
+  variable_sqft_basement = is.numeric(sqft_basement),
+  variable_yr_built = is.numeric(yr_built),
+  variable_yr_renovated = is.numeric(yr_renovated)
+  )
+
+```
+
+------------
+*Uniqueness*
+------------
+I need to eliminate duplicate rows from our dataset and prevent data duplication. It typically applies to complete rows as well as some specific columns, such as "id"(which needs to be unique). There are no columns that need to be unique in this dataset. Thus, it does not apply to a certain column. I shall thus check the entire row.
+ 
+```{r}
+# Check for rows with duplicate values across all columns
+duplicates <- mydf[duplicated(mydf) | duplicated(mydf, fromLast=TRUE), ]
+
+```
+
+```{r}
+dim(duplicates)
+```
+
+There are no duplicate values in my data frame.
+
+-------------------------
+*special character check*
+-------------------------
+This code helps me to locate any rows or columns in my data frame that have special characters in them. It's important to recognise and handle special characters correctly since they can occasionally cause problems with data processing or analysis. 
+
+```{r}
+# Find rows or columns that contain special characters
+specialcharacter_rows <- grep("[^[:alnum:]]", mydf, value = TRUE)
+specialcharacter_columns <- grep("[^[:alnum:]]", mydf, value = TRUE)
+
+# Ignore decimal values in the extracted rows or columns
+specialcharacter_rows <- specialcharacter_rows[is.integer(specialcharacter_rows)]
+specialcharacter_columns <- specialcharacter_columns[is.integer(specialcharacter_columns)]
+
+## Print the results
+if (length(specialcharacter_rows) > 0 || length(specialcharacter_columns) > 0) {
+  cat("Special characters were found in the following rows and columns of my_special_data_subset:\n")
+  cat("Rows: ", specialcharacter_rows, "\n")
+  cat("Columns: ", specialcharacter_columns, "\n")
+  
+  ## Subset the data frame to only include the rows and columns with special characters
+  my_special_data_subset <- my_data[specialcharacter_rows, specialcharacter_columns]
+  
+  ## Print the subset of the data frame
+  print(my_special_data_subset)
+} else {
+  cat("No special characters were found in my_special_data_subset.\n")
+}
+```
+
+There are no special characters found in my dataset.
+
+
+-----------------------------------------------------
+*Summary of the results of the Data quality analysis*
+-----------------------------------------------------
+
+
+-----------------------------
+Summary - Integrity Check
+-----------------------------
+
+```{r}
+integrity_qualcheck <-confront(mydf,integrity.rules) 
+summary(integrity_qualcheck)
+```
+For better understanding, I will plot the 'integrity_qualcheck'
+
+```{r}
+plot(integrity_qualcheck, xlab = "")
+```
+
+As we can see, There are total 7 fails, 4 fails in the bedroom column which means there are 4 entries which are not greater than or equal to zero, 3 Fails in sqft_living which are not greater than or are equal to zero, and there are 3 NA/NAN values present in the Bathroom column of my data frame.
+we will move further to understand what are the missing, NA or incomplete values in our data frame.
+
+-----------------------------
+Summary - Variable Type Check
+-----------------------------
+
+```{r}
+variabletype_qualcheck <- confront(mydf,variabletype.rule)
+summary(variabletype_qualcheck)
+```
+
+For better understanding, I will plot the 'variabletype_qualcheck'
+
+```{r}
+plot(variabletype_qualcheck, xlab = "")
+```
+
+
+As we can see, There are no fails in the variable type check in any column of my dataframe. 
+I have converted the 'view', 'condition', 'waterfront', 'floors','condition.ind' and 'grade' column into factors. hence, they are not present in this variable type check.
+
+-----------------------------
+Summary - Completeness Check
+-----------------------------
+
+```{r}
+completeness_qualcheck <-  confront(mydf,completeness.rules)
+summary(completeness_qualcheck)
+```
+
+For better understanding, I will plot the "completeness_qualcheck'.
+
+```{r}
+plot(completeness_qualcheck, xlab = "")
+```
+
+As we can see, there are 3 fails in the 'bathroom' column of my data frame. This means thee are 4 entries which are either negative or are equal to zero.
+
+-----------------------------
+Summary - Missing Value Check
+-----------------------------
+
+```{r}
+missing_qualcheck <- confront(mydf,missing.rules)
+summary(missing_qualcheck)
+```
+For better understanding, I will plot the 'missing_qualcheck'.
+
+```{r}
+plot(missing_qualcheck, xlab = "")
+```
+
+
+As we can see, after completeness check and missing value check, there are 3 NA values present in the "bathroom" column.
+
+## 1.3 Data cleaning  
+ 
+A dataset's flaws, inconsistencies, and inaccuracies are found and fixed through the process of data cleaning, sometimes referred to as data cleansing or data scrubbing. Before performing any analysis, creating models, or basing business choices on the data, it is an essential step in the data preparation process. The fundamental goal of data cleaning is to raise the data's dependability and quality so that it may be used confidently and successfully in a variety of applications.
+
+There were 3 issues found in my data frame.
+
+#1. There are four (-1)negative values in the bedroom column. 
+   The value -1 in the bedroom column could be the result of a data entry error or typo. A property cannot have have a -1 bedroom, hence this contradiction needs to be resolved.
+• If this is a data input mistake, I will inquire from the respective person who is responsible for data collection and update the values to reflect the proper number of bedrooms.
+• If there are missing data, use a suitable imputation approach or, if the impacted entries are not essential for further analysis, consider eliminating them.
+• In this case, i am going to delete these four entries.
+
+```{r}
+mycleandf <- mydf %>%
+  filter(bedrooms != -1)
+```
+
+
+```{r}
+integrity_qualcheck <-confront(mycleandf,integrity.rules) 
+summary(integrity_qualcheck)
+```
+As we can see, the 4 negative entries are now deleted.
+
+#2. There are 3 entries in the sqft_living column which are equal to zero.
+    Zero value in the sqft_living column is not possible and this could be the result of a data entry error or typo. This contradiction must be fixed because it is extremely uncommon for a property to have a living area of 0 square feet.
+• I will Correct the values with the precise square footage of the living area if there was a data entry mistake by inquiring the respective person who was responsible for data collection.
+• In this case, I am going to delete the entries which has a zero value in sqft_living column because, I can not put any value in the missing entries of the sqft_living column.
+
+
+```{r}
+mycleandf <- mycleandf[mycleandf$sqft_living != 0, ]
+```
+
+
+```{r}
+integrity_qualcheck <-confront(mycleandf,integrity.rules) 
+summary(integrity_qualcheck)
+```
+
+
+#3. There are 3 entries missing in the bathroom column i.e. NA
+    This can be a result of data entry mistakes that resulted in improper recording of the number of bathrooms
+• I will delete the entries with missing values because I can not put any value where the data is missing in the data frame.
+
+```{r}
+mycleandf <- mycleandf %>%
+  filter(!is.na(bathrooms))
+```
+
+```{r}
+missing_qualcheck <- confront(mycleandf,missing.rules)
+summary(missing_qualcheck)
+```
+As we can see, the NA rows with the NA values are deleted.
+
+```{r}
+summary(mycleandf)
+```
+
+My data is now clean, I can move further to Exploratory Data Analysis.
+
+# 2. Exploratory Data Analysis (EDA)
+
+## 2.1 EDA plan
+
+*1. Descriptive statistics*
+
+#• I am going to calculate the summary statistics 
+      In exploratory data analysis (EDA), summary statistics like mean, median, quartiles, lowest, and maximum values are essential. They offer critical information about the distribution and traits of numerical variables, which can be used to comprehend the general structure of the data and make data-driven decisions. I will get a thorough overview of the data, spot trends and outliers. They form the basis of data exploration and can direct other data analysis operations.
+
+#• Skewness and kurtosis: 
+Skewness evaluates a distribution's asymmetries. If a distribution's left and right sides are mirror images of one another, it is said to be symmetric. Kurtosis evaluates a distribution's tails' weight in comparison to a normal distribution. In comparison to a normal distribution, a distribution with a higher kurtosis has heavier tails and more extreme values.
+
+#• Frequency tables : 
+Categorical data can be arranged and summarised using frequency tables, commonly referred to as frequency distributions or contingency tables. They show the number or frequency of each type or group. Frequency tables are frequently used in descriptive statistics and exploratory data analysis, to help give a clear overview of the distribution of categorical variables.
+  
+#• Calculating proportions :
+Proportions show the percentage or proportion of data points that belong to each category compared to the overall number of data points, proportions assist us in better understanding the distribution of categorical data.
+
+*2. Univariate Analysis*
+
+Exploratory data analysis (EDA) relies heavily on univariate visualisations to help us comprehend the various variables in a dataset. They enable us to learn more about the distribution and traits of a single variable without taking into account how that variable interacts with other variables.
+
+• I'll create visual representations like histograms, box plots, and bar graphs so that we can better understand the       variability, distribution, and potential outliers of each data. 
+I can understand the features of specific columns thanks to these visualisations, including price, bedrooms, bathrooms, sqft_living, floors, waterfront, view, condition, grade, sqft_above, sqft_basement, yr_built, yr_renovated, and condition.ind.
+  
+*3. Multivariate analysis*
+
+Multivariate analysis will help me to investigate and examine the connections between several variables in my dataset. Multivariate analysis, as opposed to univariate analysis, which concentrates on individual variables, takes into account the dependencies and interactions between two or more variables at once.
+• I will create box plot, scatter plot and density plot to investigate the relation between different variables.  
+
+## 2.2 EDA and summary of results  
+
+```{r}
+str(mycleandf)
+```
+
+------------------------
+*Descriptive Statistics*
+------------------------
+
+```{r}
+# Summary statistics for numeric variables
+summary(mycleandf[c("price", "sqft_living", "sqft_lot")])
+```
+
+```{r}
+#Calculating skewness and kurtosis
+
+skewness(mycleandf[, c("price", "sqft_living", "sqft_lot")])
+kurtosis(mycleandf[, c("price", "sqft_living", "sqft_lot")])
+```
+
+*Skewness* 
+
+1. *price = 1.854270* - This indicates that the distribution of the 'price' is positively skewed.A positive skewness value of 1.854270 indicates that the right tail of the distribution is longer, and there are relatively more extreme values on the right side.
+
+2. *sqft_living = 1.262014* - A skewness value of 1.262014 indicates that the 'sqft_living' is positively skewed, with a longer right tail and more extreme values on the right side of the distribution.
+
+3. *sqft_lot = 7.894879* - A skewness value of 7.894879 indicates that the distribution of the 'sqft_lot' is highly positively skewed. A very high positive skewness value like 7.894879 indicates that the data is heavily concentrated on the left side of the distribution, and there are very few data points on the right side.
+
+*Kurtosis*
+
+1. *price = 6.985177* This indicates that the distribution has positive kurtosis, meaning it has heavier tails and a higher peak compared to a normal distribution.
+
+2. *sqft_living = 5.640304* - This indicates a positive kurtosis, indicating heavier tails and a higher peak compared to a normal distribution. It has more extreme values in the tail.
+
+3. *sqft_lot = 81.274977* - This indicates very high positive kurtosis. The distribution has extremely heavy tails and an extremely high peak compared to a normal distribution. It has a significant concentration of data around the mean and a high number of outliers in the tails.
+
+
+```{r}
+# Frequency table for categorical variables
+
+cat("Table for Waterfront:\n")
+table(mycleandf$waterfront)
+
+cat("\n")
+
+cat("Table for view:\n") 
+table(mycleandf$view)
+
+cat("\n")
+
+cat("Table for floors:\n")
+table(mycleandf$floors) 
+
+cat("\n")
+
+cat("Table for bedrooms:\n")
+table(mycleandf$bedrooms)
+
+cat("\n")
+
+cat("Table for bathrooms:\n")
+table(mycleandf$bathrooms)
+
+cat("\n")
+
+cat("Table for condition:\n" )
+table(mycleandf$condition)
+
+cat("\n")
+
+cat("Table for grade:\n")
+table(mycleandf$grade) 
+
+cat("\n")
+
+cat("Table for condition.ind:\n")
+table(mycleandf$condition.ind)
+
+cat("\n\n")
+cat("Proportions for categorical variables\n")
+
+cat("\n")
+
+cat("Proportion Table for Waterfront:\n")
+prop.table(table(mycleandf$waterfront))
+
+cat("\n")
+
+
+cat("Proportion Table for view:\n")
+prop.table(table(mycleandf$view))
+
+cat("\n")
+
+cat("Proportion Table for floors:\n")
+prop.table(table(mycleandf$floors))
+
+cat("\n")
+
+
+cat("Proportion Table for Bedrooms:\n")
+prop.table(table(mycleandf$bedrooms))
+
+cat("\n")
+
+cat("Proportion Table for bathrooms:\n")
+prop.table(table(mycleandf$bathrooms))
+
+cat("\n")
+
+cat("Proportion Table for condition:\n")
+prop.table(table(mycleandf$condition))
+
+cat("\n")
+
+cat("Proportion Table for grade:\n")
+prop.table(table(mycleandf$grade))
+
+cat("\n")
+
+cat("Proportion Table for condition index:\n")
+prop.table(table(mycleandf$condition.ind))
+
+
+```
+
+-------------------------------
+Univariate Analysis - Histogram
+-------------------------------
+
+```{r}
+# Univariate Visualization for Price
+ggplot(mycleandf, aes(x = price)) +
+  geom_histogram(fill = "red", color = "blue", bins = 30) +
+  labs(title = "Distribution of Price", x = "Price", y = "Count")
+
+# Univariate Visualization for sqft_living Area
+ggplot(mycleandf, aes(x = sqft_living)) +
+  geom_histogram(fill = "red", color = "blue", bins = 30) +
+  labs(title = "Distribution of Living Area in sqft", x = "Living Area", y = "Count")
+
+# Univariate Visualization for sqft_lot Area
+ggplot(mycleandf, aes(x = sqft_lot)) +
+  geom_histogram(fill = "red", color = "blue", bins = 30) +
+  labs(title = "Distribution of Lot Area in sqft", x = "Lot Area", y = "Count")
+
+
+# Univariate Visualization for Sqft Above
+ggplot(mycleandf, aes(x = sqft_above)) +
+  geom_histogram(fill = "red", color = "blue", bins = 30) +
+  labs(title = "Distribution of Sqft Above", x = "Sqft Above", y = "Count")
+
+# Univariate Visualization for Sqft Basement
+ggplot(mycleandf, aes(x = sqft_basement)) +
+  geom_histogram(fill = "red", color = "blue", bins = 30) +
+  labs(title = "Distribution of Basement in Sqft", x = "Sqft Basement", y = "Count")
+
+# Univariate Visualization for Year Built
+ggplot(mycleandf, aes(x = yr_built)) +
+  geom_histogram(fill = "red", color = "blue", bins = 30) +
+  labs(title = "Distribution of Year Built", x = "Year Built", y = "Count")
+
+# Univariate Visualization for Year Renovated
+ggplot(mycleandf, aes(x = yr_renovated)) +
+  geom_histogram(fill = "red", color = "blue", bins = 30) +
+  labs(title = "Distribution of Year Renovated", x = "Year Renovated", y = "Count")
+```
+
+*Analysis for the above Histograms*
+
+• After analysis, we can see that the distribution of the data in the following columns Price, sqft_living, sqft_lot, sqft_above and sqft_basement are all right skewed.
+• And we can also see that the distribution of data with respect to the year built is left skewed.
+• We can also see that there are many outliers. In our case, I am going to ignore the outliers because this is a house analysis dataset and the data can vary according to different types of houses. So, ignoring the outliers is the best alternative in our case.
+
+---------------------------------
+*Univariate Analysis - Bar chart*
+---------------------------------
+
+```{r}
+
+# Univariate Visualization for Condition Index
+ggplot(mycleandf, aes(x = condition.ind)) +
+  geom_bar(fill = "red", color = "blue") +
+  labs(title = "Distribution of the 'Condition Index'", x = "Condition Index", y = "Count")
+
+# Univariate Visualization for Floors
+ggplot(mycleandf, aes(x = floors)) +
+  geom_bar(fill = "red", color = "blue") +
+  labs(title = "Distribution of the 'Floors'", x = "Floors", y = "Count")
+
+# Univariate Visualization for Waterfront
+ggplot(mycleandf, aes(x = waterfront)) +
+  geom_bar(fill = "red", color = "blue") +
+  labs(title = "Distribution of the 'Waterfront'", x = "Waterfront", y = "Count")
+
+# Univariate Visualization for View
+ggplot(mycleandf, aes(x = view)) +
+  geom_bar(fill = "red", color = "blue") +
+  labs(title = "Distribution of the 'View'", x = "View", y = "Count")
+
+# Univariate Visualization for Condition
+ggplot(mycleandf, aes(x = condition)) +
+  geom_bar(fill = "red", color = "blue") +
+  labs(title = "Distribution of the 'Condition'", x = "Condition", y = "Count")
+
+# Univariate Visualization for Grade
+ggplot(mycleandf, aes(x = grade)) +
+  geom_bar(fill = "red", color = "blue") +
+  labs(title = "Distribution of the 'Grade'", x = "Grade", y = "Count")
+
+
+```
+ 
+*Univariate Analysis - Analysis of the above Bar charts*
+• Frequency for properties with Condition Index 0 is greater than the properties with condition index 1.
+• Frequency for the properties with only 1 Floor is the greatest followed by properties with 2 floors and the lowest       frequency  is for the properties with 2.5 floors.
+• Number of of properties with Waterfront = 0 is greater than Waterfront = 1
+• Number of properties with View = 0 is greater followed by view = 2 and the least properties with View = 1  
+• Number of properties with Condition = 3 is the most and least number of properties with Condition = 2 
+• The distribution of properties with Grade = 7 is the most followed by grade = 8 and properties with Grade = 12 is the    lowest
+
+*Before proceeding to multivariate analysis. I will convert the 'bathrooms' and 'bedrooms' column into factors for further analysis.*
+
+```{r}
+mycleandf$bedrooms <- factor(mycleandf$bedrooms)
+mycleandf$bathrooms <- factor(mycleandf$bathrooms)
+```
+
+```{r}
+str(mycleandf)
+```
+
+
+------------------------
+*Multi-variate Analysis*
+------------------------
+
+```{r}
+#Multi-variate Analysis - Scatter Plot
+
+ggplot(mycleandf, aes(x = sqft_living, y = price)) +
+  geom_point(color = "red") +
+  labs(title = "Price vs. Living Area", x = "sqft_living ", y = "Price")
+
+ggplot(mycleandf, aes(x = sqft_lot, y = price)) +
+  geom_point(color = "red") +
+  labs(title = "Price vs. Lot Area", x = "sqft_lot", y = "Price")
+
+ggplot(mycleandf, aes(x = sqft_above, y = price)) +
+  geom_point(color = "red") +
+  labs(title = "Price vs. Sqft Above", x = "Sqft_above", y = "Price")
+
+ggplot(mycleandf, aes(x = sqft_basement, y = price)) +
+  geom_point(color = "red") +
+  labs(title = "Price vs. Sqft Basement", x = "Sqft_basement", y = "Price")
+```
+
+#Multi-variate Analysis - Box Plot
+
+```{r}
+ggplot(mycleandf, aes(x = waterfront, y = price)) +
+  geom_boxplot(fill = "red", color = "blue", outlier.color = "black") +
+  labs(title = "Price and Waterfront", x = "Waterfront", y = "Price")
+
+ggplot(mycleandf, aes(x = bedrooms, y = price)) +
+  geom_boxplot(fill = "red", color = "blue", outlier.color = "black") +
+  labs(title = "Price and Bedrooms", x = "Bedrooms", y = "Price")
+
+ggplot(mycleandf, aes(x = bathrooms, y = price)) +
+  geom_boxplot(fill = "red", color = "blue", outlier.color = "black") +
+  labs(title = "Price and Bathrooms", x = "Bathrooms", y = "Price")
+
+ggplot(mycleandf, aes(x = floors, y = price)) +
+  geom_boxplot(fill = "red", color = "blue", outlier.color = "black") +
+  labs(title = "Price and Floors", x = "Floors", y = "Price")
+
+ggplot(mycleandf, aes(x = view, y = price)) +
+  geom_boxplot(fill = "red", color = "blue", outlier.color = "black") +
+  labs(title = "Price and View", x = "View", y = "Price")
+
+ggplot(mycleandf, aes(x = condition, y = price)) +
+  geom_boxplot(fill = "red", color = "blue", outlier.color = "black") +
+  labs(title = "Price and Condition", x = "Condition", y = "Price")
+
+ggplot(mycleandf, aes(x = grade, y = price)) +
+  geom_boxplot(fill = "red", color = "blue", outlier.color = "black") +
+  labs(title = "Price and Grade", x = "Grade", y = "Price")
+
+ggplot(mycleandf, aes(x = condition.ind, y = price)) +
+  geom_boxplot(fill = "red", color = "blue", outlier.color = "black") +
+  labs(title = "Price and Condition Index", x = "Condition.ind", y = "Price")
+```
+
+*Multi-variate Analysis - Box Plot*
+
+• Price and Waterfront: Prices of properties with no Waterfront less compared to properties with a Waterfront 
+• Price and Bedrooms:   Prices of properties increases as number of bedrooms increases. Directly related to each other
+• Price and Bathrooms:  Price of properties increases as number of bathrooms increases. Directly related to each other
+• Price and Floors:     Price of properties with 2 Floors is maximum followed 1.5 and and the least is with 2.5 floors
+• Price and View:       Price of properties with View = 3 is the maximum and the least is for the properties with no View
+• Price and Condition:  Price for properties with Condition Index= 3, 4 and 5 is almost same and Condition index = 2 has                         the least price
+• Price and Grade:      Price for the properties with Grade = 12 has the most price and the price is less for Grade = 5
+• Price and Condition Index: There is no difference between the price range for Condition Index = 0 or 1
+
+```{r}
+ggplot(mycleandf, aes(x = sqft_living, fill = waterfront)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot of Sqft Living and Waterfront", x = "Sqft_living", fill = "Waterfront")
+
+ggplot(mycleandf, aes(x = floors, fill = floors)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot of Price and Floors", x = "Floors", y = "Density")
+
+ggplot(mycleandf, aes(x = bathrooms, fill = bathrooms)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot of Price and Bathrooms", x = "Bathrooms", y = "Density")
+
+ggplot(mycleandf, aes(x = bedrooms, fill = bedrooms)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot of Price and Bedrooms", x = "Bedrooms", y = "Density")
+
+ggplot(mycleandf, aes(x = condition, fill = condition)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot of Price and Condition", x = "Condition", y = "Density")
+```
+
+
+# 2.3 Additional insights and issues
+
+I will perform a correlation analysis between numerical columns of my dataset using the correlation heatmap.The correlation heatmap shows the correlation coefficients between my numerical variables ("price", "bedrooms", "bathrooms", "sqft_living", "sqft_lot", "sqft_above", "sqft_basement", "yr_built", "yr_renovated"), represented by colours, where warmer colours indicate stronger positive correlations, and cooler colours indicate stronger negative correlations.
+
+```{r}
+#selecting numerical columns for my correlation analysis.
+numerical_columns <- c("price", "bedrooms", "bathrooms", "sqft_living", "sqft_lot", "sqft_above", "sqft_basement", "yr_built", "yr_renovated")
+
+# First I will convert my bedrooms and bathrooms columns back to numeric 
+mycleandf$bedrooms <- as.numeric(as.character(mycleandf$bedrooms))
+mycleandf$bathrooms <- as.numeric(as.character(mycleandf$bathrooms))
+
+# Computing the correlation matrix for further analysis.
+correlation_matrix <- cor(mycleandf[, numerical_columns])
+
+# The melt() function transforms the correlation matrix into a format suitable for plotting with ggplot.
+correlation_data <- melt(correlation_matrix)
+
+# Finally plotting the correlation heatmap
+ggplot(correlation_data, aes(x = Var2, y = Var1, fill = value)) +
+  geom_tile() +
+  scale_fill_gradient(low = "blue", high = "black") +
+  labs(title = "Correlation Heatmap", x = "", y = "") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+
+
+```
+
+we can see a strong correlation between price and sqft_living, price and sqft_above and a weak correlation between price and yr_built.
+To summarise, the price of properties is getting influenced by factors like number of bedrooms, number of bathrooms, sqft living area. 
+--------------------
+*Hypothesis Testing*
+--------------------
+
+```{r}
+# Perform a t-test between two groups based on a categorical variable (e.g., waterfront)
+group1 <- mycleandf[mycleandf$condition.ind == "0", "price"]
+group2 <- mycleandf[mycleandf$condition.ind == "1", "price"]
+
+cat("Number of observations in group1:", length(group1), "\n")
+cat("Number of observations in group2:", length(group2), "\n")
+
+# Perform the t-test
+t_test_result <- t.test(group1, group2)
+
+# Print the t-test result
+print(t_test_result)
+```
+
+t-value: -0.93053
+Degrees of freedom (df): 209.86
+p-value: 0.3532
+
+The t-value shows how much the two groups' means differ from one another in relation to the variability within each group. According to a negative t-value, the mean of "group1" is lower than the mean of "group2," yet the difference is not statistically significant.
+The null hypothesis in this situation is that there is no difference in the means of the two groups. We cannot rule out the null hypothesis because the p-value (0.3532) exceeds the standard significance limit of 0.05. This indicates that there is insufficient data to draw the conclusion that the means of the "price" variable differ significantly between the two groups with different "condition.ind" values.
+To summarize, we do not have enough evidence to say that there is a significant difference in average house prices between the two groups with different "condition.ind" values.
+
+# 3. Modelling property price
+
+## 3.1 Explain your analysis plan
+
+•	In order to establish links and trends between the price of a property and other numerical columns as well as between the price of a property and numerous other category columns, we have used a variety of visualisation techniques.
+•	We also looked for connections between the price of property (the "price") and many other category columns. we used boxplots to visualise the price variation caused by the numerous factors listed in the category column,  
+•	However, a number of needless outliers that tend to disrupt the distribution of the dataset and the visualisation are highlighted in box plots and scatter plots. As a result, the process is hampered and inaccurate observations are made. But I will disregard the outliers in the case of our data.
+•	We would go even deeper and develop regression models to establish the relationship between various columns and the dependent variables in order to further assess the research topic (in this case, the price of property).
+•	Using  regression models, we would construct the most effective residual models that would directly affect the pricing of the property.
+
+## 3.2 Build a model for price
+ 
+
+• The answer to the question of how property price relates to bedrooms, bathrooms, living_area, lot_area, floors, waterfront, view, condition, grade, sqft_above, sqft_basement, year_built, year_renovated, and condition_index may be found using multiple regression.
+• In order to begin modelling, we will incorporate the Maximal model along with all the columns that could affect the price of real estate. Our dependent variable would be the price, and our independent variables would be everything else. 
+•	We would not be including quadratic terms since there are large numbers of independent columns and would complex the structure more.
+• We will set up a multiple regression using the lm() function, and then parse the regression model into summary() for a detailed examination.
+
+```{r}
+str(mycleandf)
+```
+
+
+```{r}
+# list of all the columns of the data frame-
+# price, bedrooms, bathrooms, sqft_living, sqft_lot, floors, waterfront, view, condition, grade, sqft_above, sqft_basement, yr_built, yr_renovated, condition.ind
+
+# Fit the maximal model
+maximal_model <- lm(price ~ bedrooms + bathrooms + sqft_living + sqft_lot + floors + waterfront + view + condition + grade + sqft_above + sqft_basement + yr_built + yr_renovated + condition.ind, data = mycleandf)
+
+# Print the summary of the maximal model
+summary(maximal_model)
+
+```
+The statistical significance of the coefficients is described by the significance codes. The codes, which represent the significance level, range from '***' to '' (empty space). There are coefficients that are extremely significant (p-value 0.001), significant (p-value 0.05), and non-significant (p-value 0.01). 
+The standard deviation of the residuals, or the residual standard error (181200), is a measurement of how well the model predicts the dependent variable (price). A lower residual standard error suggests a better model fit and more precise forecasts.
+Multiple R-squared: The multiple R-squared value (0.6824) represents the percentage of the dependent variable's variance that the independent variables can explain. In this case, the independent variables account for about 68.24% of the price variation.
+Adjusted R-squared value: The multiple R-squared value for the number of predictors in the model is modified by the adjusted R-squared value (0.6546). It provides a more reliable measure of model fit and penalises the use of unnecessary variables. A higher adjusted R-squared implies a better match between the model and the data.
+F-statistic and p-value: The F-statistic (24.54) tests the overall significance of the model. Lower p-values (usually below 0.05) indicate that the model is statistically significant. The p-value, on the other hand, evaluates the model's importance on its own. The model is statistically significant, according to the associated p-value (2.2e-16), which implies that at least one of the independent variables significantly affects the dependent variable.
+Looking at the coefficients output, we can see that there are two predictors with singularities: sqft_basement and condition.ind1, both have "NA" values for Estimate, Std. Error, t-value, and p-value. We need to remove these predictors first.
+
+
+```{r}
+maximal_model_1 <- lm(formula = price ~ bedrooms + bathrooms + sqft_living + sqft_lot + 
+    floors + waterfront + view + condition + grade + sqft_above + 
+    yr_built + yr_renovated, 
+    data = mycleandf)
+
+summary(maximal_model_1)
+```
+
+```{r}
+maximal_model_2 <- lm(formula = price ~ sqft_living + waterfront + view + grade + yr_built + yr_renovated, data = mycleandf)
+
+summary(maximal_model_2)
+```
+model:
+Residual standard error: 181200 on 297 degrees of freedom
+Multiple R-squared:  0.6824,	
+Adjusted R-squared:  0.6546 
+F-statistic: 24.54 on 26 and 297 DF,  
+p-value: < 2.2e-16
+
+After removing the predictors with singularities.
+
+model1:
+Residual standard error: 181200 on 297 degrees of freedom
+Multiple R-squared:  0.6824,	
+Adjusted R-squared:  0.6546 
+F-statistic: 24.54 on 26 and 297 DF,  
+p-value: < 2.2e-16
+
+model 2: 
+Residual standard error: 180900 on 308 degrees of freedom
+Multiple R-squared:  0.672,	
+Adjusted R-squared:  0.656 
+F-statistic: 42.06 on 15 and 308 DF,  
+p-value: < 2.2e-16
+
+The residual standard errors, which represent average differences between observed and anticipated values, are comparable for the two models. Model 2 may be a somewhat better match to the data in terms of forecasting the target variable because it has a marginally smaller residual standard error.
+
+Both models account for a sizeable percentage of the variance in the dependent variable, according to the multiple R-squared values for each model. The multiple R-squared value for Model 1 is somewhat higher than that of Model 2 (0.6824), indicating that it explains slightly more variance in the target variable.
+
+The R-squared value is adjusted for the number of predictors in the model using adjusted R-squared. Model 1 is superior at accounting for the number of predictors in the model because it has a little higher adjusted R-squared (0.6546) than Model 2 (0.656).
+
+The F-statistic evaluates the model's overall significance. Low p-values for both models ( 2.2e-16) show that they are both highly significant in explaining the dependent variable.
+
+When we compare the models, we find that:
+
+R-squared (0.6824) and Adjusted R-squared (0.6546) for Model 1 are marginally higher than those for Model 2 (0.672 and 0.656, respectively).
+Model 2's residual standard error is lower (180900) than Model 1's (181200).
+Both models have incredibly low p-values, indicating a significant match, and Model 2 has a higher F-statistic (42.06) than Model 1 (24.54).
+
+
+
+```{r}
+step(maximal_model)
+```
+We have identified a new model by utilising the Step function that is distinct from other models ; as a result, we'll utilise this new model to compare F-statistics and determine which model is most appropriate.
+
+```{r}
+formula <- price ~ sqft_living + waterfront + view + grade + 
+    yr_built + yr_renovated
+
+# Fit the linear regression model
+maximal_model_3<- lm(formula, data = mycleandf)
+
+# Print the summary of the model
+summary(maximal_model_3)
+```
+All three models appear to be equally effective at describing the variance in the data since they have similar R-squared values, the same F-statistic, and the same p-value. To avoid overfitting in such circumstances, it is typical to use the simpler model. Compared to Models 2 and 3, Model 1 may be a little more complex in this situation because it includes more variables.
+
+Considering the similarities in performance indicators and the principle of simplicity, Models 2 or 3 would be favoured above Model 1 as the best fit model. 
+
+I will select model 3 as the best-fit model.
+
+The best fit model :
+
+***Price = 5160153.11 + 121.68 * sqft_living + 576744.04 * waterfront1 + 188313.71 * view1 - 28949.66 * view2 + 305569.32 * view3 + 273125.53 * view4 - 61552.91 * grade6 + 29849.34 * grade7 + 134165.07 * grade8 + 321874.77 * grade9 + 481222.92 * grade10 + 442225.33 * grade11 + 895273.74 * grade12 - 2543.84 * yr_built + 85.45 * yr_renovated***
+
+
+
+## 3.3 Critique model using relevant diagnostics
+
+```{r}
+plot(maximal_model_3)
+```
+
+1. Residuals vs Fitted : 
+
+The scatter plot reveals that there is no apparent trend in the residuals, which are randomly distributed around 0. 
+This shows that the regression model fits the data well and that the model's assumption are true. A few points are located outside the primary cluster of points. These points might be outliers, which might suggest that the regression model does not adequately account for them. Alternately, these data points might be accurate ones that are just more severe than the rest of the data set.
+
+2. Q-Q Plot :
+The Q-Q plot's points don't all fall in a straight line. This indicates that the data may not follow a normal distribution. Particularly, the distribution's tails are heavier than one would expect from a normal distribution. This indicates that the data has more extreme values than would be predicted by a normal distribution.
+
+3. Scale-Location :
+the scale-location plot does not show a horizontal line. Instead, the points are clustered around the fitted values at the lower end of the x-axis, but they become more spread out as the fitted values increase. This suggests that the assumption of homoscedasticity is not satisfied. Homoscedasticity is the assumption that the variance of the residuals is constant at all fitted values.
+
+4. Residuals vs leverage :
+A few spots that are obviously outliers can be seen in the residual vs. leverage diagram. Due to their high leverage, these points have a significant impact on the model. These points have substantial residuals, which indicates that the model fails to properly account for them.
+
+## 3.4 Suggest improvements to your model
+
+*Based on the findings in 3.2 and 3.3 articulates possible alternative approaches to address them (5 marks).*
+
+Although the graphical diagnostics appear to be good, the model's R-squared value is poor. The following strategies can be used to increase the value of R-squared. 
+
+1. Remove the outliers from the data: Since outliers can have a disproportionately large impact on the model's fit, removing them from the data may increase the R-squared score. Outliers may contain crucial information or be legitimate data points that need to be included, thus it is necessary to remove them with caution and a good cause.
+
+2. The dependent variable can be transformed , which can occasionally increase the R-squared value. In situations when the relationship between the dependent and explanatory variables is non-linear, taking the logarithm or square root of the dependent variable may be helpful.
+
+3. Increase the sample size and the number of observations: A larger sample size can result in a more accurate estimation of the model's parameters and may boost the R-squared value. Additionally, extra information can aid in capturing a more precise depiction of the underlying link between the variables.
+
+
+
+# 4. Modelling Property Condition
+
+## 4.1 Plan and build a model for the likelihood of a property being in good condition (using the condition.ind variable provided).
+
+We would use logistic regression to explain the association between a categorical value (condition.ind) as a dependent variable.
+The remainder of the field will be treated as an independent variable and condition.ind as a dependent variable. It will be used in our model as we search for the most important factors.
+
+*AIC :* When choosing a statistical model, such as logistic regression or linear regression, the Akaike Information Criterion (AIC) is a measure that is often utilised. The goodness of fit and model complexity are trade-offs represented by the AIC. Because the model is penalised for having additional parameters, overfitting is avoided. Each candidate model's AIC value is determined, and lower AIC values signify a better balance between model fit and complexity. Models with lower AIC scores are therefore recommended.
+
+
+
+```{r}
+condition.ind_model <- glm(condition.ind ~ price + bedrooms + bathrooms + sqft_living + sqft_lot + floors + waterfront + view + condition + grade + sqft_above + sqft_basement + yr_built + yr_renovated, data = mycleandf, family = binomial)
+
+# View the summary of the model
+summary(condition.ind_model)
+
+# Plot the model
+plot(condition.ind_model)
+
+```
+
+Condition.ind is the dependent variable.It is predicted using a number of independent variables, price, bedrooms, bathrooms, sqft_living, and others.
+The model's coefficients show how each independent variable and the likelihood that a property would be in good condition are related to one another.
+But there are a few problems with the model's output. Insignificant z-values and p-values (all p-values are 1) result from several coefficients' extremely small values and high standard errors.
+The residual deviance is very close to zero, suggesting multicollinearity among the independent variables or a potential issue with the model's fit.
+The sqft_basement variable has a problem; singularities prevent the definition of its coefficient.
+
+The residual vs. fitted values plot shows a few points that are clearly outliers. These points have large residuals, which means that they are not well-explained by the model. 
+The Q-Q plot's points don't all fall in a straight line. This implies that the residuals are not distributed properly. Particularly, the distribution's tails are heavier than one might expect from a normal distribution. This indicates that the residuals are more extreme than would be predicted if they were regularly distributed.
+There is no horizontal line displayed on the scale-location plot. As opposed to this, the dots are grouped around the fitted values at the lower end of the x-axis, but as the fitted values rise, they become more dispersed.
+the residual vs. leverage plot shows a few points that are clearly outliers. These points have high leverage, which means that they are influential in the model. The residuals for these points are also large, which means that they are not well-explained by the model.
+
+# References  
+
+Holtz, Y. (n.d.). The R Graph Gallery – Help and inspiration for R charts. [online] The R Graph Gallery. Available at: https://r-graph-gallery.com/index.html.
+
+rdrr.io. (n.d.). ggbarstats: Stacked bar charts with statistical tests in IndrajeetPatil/ggstatsplot: ‘ggplot2’ Based Plots with Statistical Details. [online] Available at: https://rdrr.io/github/IndrajeetPatil/ggstatsplot/man/ggbarstats.html    
